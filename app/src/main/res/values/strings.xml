@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CV</string>
+    <string name="student_data_template">Roll Number: %1\$s\nName: %2\$s\nCGPA: %3\$s\nDegree: %4\$s\nGender: %5\$s\nDate of Birth: %6\$s\nCareer Interests: %7\$s</string>
 </resources>
