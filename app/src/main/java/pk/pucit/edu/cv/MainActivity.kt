@@ -2,10 +2,11 @@ package pk.pucit.edu.cv
 
 import android.annotation.SuppressLint
 import android.content.ContentValues
+import android.content.Intent
 import android.database.Cursor
-import android.database.sqlite.SQLiteDatabase
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.BaseColumns
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.view.View
@@ -16,7 +17,6 @@ import android.widget.EditText
 import android.widget.RadioButton
 import android.widget.Toast
 import android.widget.TextView
-import android.util.Log
 
 class MainActivity : AppCompatActivity() {
 //    public ActivityDetailBinding Binding;
@@ -27,22 +27,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Initialize the degree Spinner
         val degreeSpinner = findViewById<Spinner>(R.id.degree)
-        val degreeOptions = arrayOf("Bachelor's", "Master's", "Ph.D.", "Other")
+        val degreeOptions = arrayOf("BSIT", "BSCS", "BSSE.", "Other")
         val degreeAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, degreeOptions)
         degreeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         degreeSpinner.adapter = degreeAdapter
 
-        // Get a reference to the "Build a CV" button
         val buildCvButton = findViewById<Button>(R.id.buildCvButton)
 
-        // Initialize your database helper
         dbHelper = StudentDbHelper(this)
 
-        // Set an OnClickListener for the button
         buildCvButton.setOnClickListener(View.OnClickListener {
-            // Gather user input from various fields
             val rollNumber = findViewById<EditText>(R.id.rollNumber).text.toString()
             val name = findViewById<EditText>(R.id.name).text.toString()
             val cgpa = findViewById<EditText>(R.id.cgpa).text.toString()
@@ -66,9 +61,14 @@ class MainActivity : AppCompatActivity() {
             if (findViewById<CheckBox>(R.id.business).isChecked) {
                 careerInterests.add("Business")
             }
-            insertData(rollNumber, name, cgpa, selectedDegree, selectedGender, dateOfBirth, careerInterests)
-
-            val cvText = """
+            val gpaText = "CGPA: $cgpa"
+            if (cgpa.toDouble()<0 || cgpa.toDouble() > 4)
+            {
+                Toast.makeText(this, "Cgpa must be greater than 0 and less than 4: $gpaText", Toast.LENGTH_LONG).show()
+            }
+            else
+            {
+                val cvText = """
                 Roll Number: $rollNumber
                 Name: $name
                 CGPA: $cgpa
@@ -77,8 +77,17 @@ class MainActivity : AppCompatActivity() {
                 Date of Birth: $dateOfBirth
                 Career Interests: ${careerInterests.joinToString(", ")}
             """.trimIndent()
-
-            Toast.makeText(this, "Data Inserted Successfully: $cvText", Toast.LENGTH_LONG).show()
+                insertData(
+                    rollNumber,
+                    name,
+                    cgpa,
+                    selectedDegree,
+                    selectedGender,
+                    dateOfBirth,
+                    careerInterests
+                )
+                Toast.makeText(this, "Data Inserted Successfully: $cvText", Toast.LENGTH_LONG).show()
+            }
         })
 
         val displayStudentDataButton = findViewById<Button>(R.id.displayStudentDataButton)
@@ -88,6 +97,7 @@ class MainActivity : AppCompatActivity() {
             val db = dbHelper.readableDatabase
 
             val projection = arrayOf(
+                BaseColumns._ID,
                 StudentDatabase.StudentEntry.COLUMN_ROLL_NUMBER,
                 StudentDatabase.StudentEntry.COLUMN_NAME,
                 StudentDatabase.StudentEntry.COLUMN_CGPA,
@@ -111,6 +121,7 @@ class MainActivity : AppCompatActivity() {
             studentDataTextView.text = ""
 
             while (cursor.moveToNext()) {
+                val id = cursor.getString(cursor.getColumnIndex(BaseColumns._ID))
                 val rollNumber = cursor.getString(cursor.getColumnIndex(StudentDatabase.StudentEntry.COLUMN_ROLL_NUMBER))
                 val name = cursor.getString(cursor.getColumnIndex(StudentDatabase.StudentEntry.COLUMN_NAME))
                 val cgpa = cursor.getDouble(cursor.getColumnIndex(StudentDatabase.StudentEntry.COLUMN_CGPA))
@@ -120,21 +131,86 @@ class MainActivity : AppCompatActivity() {
                 val careerInterests = cursor.getString(cursor.getColumnIndex(StudentDatabase.StudentEntry.COLUMN_CAREER_INTEREST))
 
                 val studentData = """
-            Roll Number: $rollNumber
-            Name: $name
-            CGPA: $cgpa
-            Degree: $degree
-            Gender: $gender
-            Date of Birth: $dateOfBirth
-            Career Interests: $careerInterests
+                    ID: $id
+                    Roll Number: $rollNumber
+                    Name: $name
+                    CGPA: $cgpa
+                    Degree: $degree
+                    Gender: $gender
+                    Date of Birth: $dateOfBirth
+                    Career Interests: $careerInterests
         """.trimIndent()
                 studentDataTextView.append(studentData)
                 studentDataTextView.append("\n\n")
-                //displayStudentData(rollNumber, name, cgpa, degree, gender, dateOfBirth, careerInterests)
             }
 
             cursor.close()
         }
+        val deleteButton = findViewById<Button>(R.id.deleteButton)
+        val enterIdEditText = findViewById<EditText>(R.id.enterId)
+
+        deleteButton.setOnClickListener {
+            val id = enterIdEditText.text.toString().toIntOrNull()
+
+            if (id == null) {
+                Toast.makeText(this, "Please enter a valid integer ID.", Toast.LENGTH_LONG).show()
+            } else {
+                val deletedRows = deleteData(id)
+
+                if (deletedRows > 0) {
+                    Toast.makeText(this, "Record with ID $id deleted successfully.", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, "Record with ID $id not found.", Toast.LENGTH_LONG).show()
+                }
+            }
+            enterIdEditText.text = null
+        }
+        val updateButton = findViewById<Button>(R.id.updateButton)
+        val enterUpdateId = findViewById<EditText>(R.id.enterUpdateId)
+
+        updateButton.setOnClickListener {
+            val idToUpdateText = enterUpdateId.text.toString()
+
+            if (idToUpdateText.isNotEmpty()) {
+                try {
+                    val idToUpdate = idToUpdateText.toLong()
+
+                    if (isStudentIdExists(idToUpdate)) {
+                        val intent = Intent(this, UpdateActivity::class.java)
+                        intent.putExtra("studentId", idToUpdate)
+                        startActivity(intent)
+                    } else {
+                        Toast.makeText(this, "Student ID not found. Please enter a valid student ID.", Toast.LENGTH_LONG).show()
+                    }
+                } catch (e: NumberFormatException) {
+                    Toast.makeText(this, "Please enter a valid student ID.", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                Toast.makeText(this, "Please enter a student ID.", Toast.LENGTH_LONG).show()
+            }
+            enterUpdateId.text = null
+        }
+    }
+    private fun isStudentIdExists(studentId: Long): Boolean {
+        val dbHelper = StudentDbHelper(this)
+        val db = dbHelper.readableDatabase
+
+        val selection = "${BaseColumns._ID} = ?"
+        val selectionArgs = arrayOf(studentId.toString())
+
+        val cursor = db.query(
+            StudentDatabase.StudentEntry.TABLE_NAME,
+            null,
+            selection,
+            selectionArgs,
+            null,
+            null,
+            null
+        )
+
+        val studentExists = cursor.count > 0
+        cursor.close()
+        return studentExists
     }
 
     private fun insertData(
@@ -166,5 +242,11 @@ class MainActivity : AppCompatActivity() {
         val year = datePicker.year
 
         return "$day-$month-$year"
+    }
+    private fun deleteData(id: Int): Int {
+        val db = dbHelper.writableDatabase
+        val whereClause = "${BaseColumns._ID} = ?"
+        val whereArgs = arrayOf(id.toString())
+        return db.delete(StudentDatabase.StudentEntry.TABLE_NAME, whereClause, whereArgs)
     }
 }

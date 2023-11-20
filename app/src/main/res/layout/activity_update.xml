@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".UpdateActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <EditText
+            android:id="@+id/updatedRollNumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Updated Roll Number" />
+
+        <EditText
+            android:id="@+id/updatedName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Updated Name"
+            android:minHeight="48dp" />
+
+        <EditText
+            android:id="@+id/updatedCGPA"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Updated CGPA"
+            android:minHeight="48dp" />
+
+        <Spinner
+            android:id="@+id/updatedDegree"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Updated Degree" />
+
+        <RadioGroup
+            android:id="@+id/updatedGender"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <RadioButton
+                android:id="@+id/updatedMale"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Male" />
+            <RadioButton
+                android:id="@+id/updatedFemale"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Female" />
+        </RadioGroup>
+
+        <DatePicker
+            android:id="@+id/updatedDateOfBirth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <!-- Checkboxes for Career Interests -->
+        <CheckBox
+            android:id="@+id/updatedAcademia"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Academia" />
+
+        <CheckBox
+            android:id="@+id/updatedIndustry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Industry" />
+
+        <CheckBox
+            android:id="@+id/updatedBusiness"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Business" />
+
+
+        <Button
+            android:id="@+id/saveUpdateButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save Update" />
+    </LinearLayout>
+</ScrollView>
